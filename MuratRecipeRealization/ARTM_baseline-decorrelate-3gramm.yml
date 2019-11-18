@@ -16,25 +16,21 @@ topics:
 # Here is example of model with one modality
 regularizers:
     - DecorrelatorPhiRegularizer:
-        name: decorrelation_phi
+        name: decorrelation_phi_{modality1}
         topic_names: specific_topics
-        class_ids: '{main_modality}'
+        class_ids: '{modality1}'
     - DecorrelatorPhiRegularizer:
-        name: decorrelation_phi_{specific_modality}
+        name: decorrelation_phi_{modality2}
         topic_names: specific_topics
-        class_ids: '{specific_modality}'
+        class_ids: '{modality2}'
     - DecorrelatorPhiRegularizer:
-        name: decorrelation_phi_{specific_modality2}
+        name: decorrelation_phi_{modality3}
         topic_names: specific_topics
-        class_ids: '{specific_modality2}'
-    - SmoothSparsePhiRegularizer:
-        name: smooth_phi_{specific_modality}
+        class_ids: '{modality3}'
+    - DecorrelatorPhiRegularizer:
+        name: decorrelation_phi_{modality4}
         topic_names: specific_topics
-        class_ids: ['{specific_modality}']
-    - SmoothSparsePhiRegularizer:
-        name: smooth_phi_{specific_modality2}
-        topic_names: specific_topics
-        class_ids: ['{specific_modality2}']
+        class_ids: '{modality4}'
     - SmoothSparsePhiRegularizer:
         name: smooth_phi_bcg
         topic_names: background_topics
@@ -59,77 +55,63 @@ stages:
     num_iter: 20
     reg_search: add
     regularizer_parameters:
-        name: decorrelation_phi
+        name: decorrelation_phi_{modality1}
     selection:
-        - PerplexityScore{main_modality} < 1.05 * MINIMUM(PerplexityScore{main_modality}) and BleiLaffertyScore -> max
-    strategy: PerplexityStrategy
+        - PerplexityScore{modality1} < 1.05 * MINIMUM(PerplexityScore{modality1}) and BleiLaffertyScore -> max
+    strategy: PerplexityStrategy #{modality1}
     # parameters of this strategy are intended for revision
     strategy_params:
         start_point: 0
         step: 0.01
         max_len: 50
-    tracked_score_function: PerplexityScore@all
+    tracked_score_function: PerplexityScore{modality1}
     verbose: false
     use_relative_coefficients: true
 - RegularizersModifierCube:
     num_iter: 20
     reg_search: add
     regularizer_parameters:
-        name: decorrelation_phi_{specific_modality}
+        name: decorrelation_phi_{modality2}
     selection:
-        - PerplexityScore{specific_modality} < 1.05 * MINIMUM(PerplexityScore{specific_modality}) and BleiLaffertyScore -> max
-    strategy: PerplexityStrategy
+        - PerplexityScore{modality2} < 1.05 * MINIMUM(PerplexityScore{modality2}) and BleiLaffertyScore -> max
+    strategy: PerplexityStrategy #{modality2}
     # parameters of this strategy are intended for revision
     strategy_params:
         start_point: 0
         step: 0.01
         max_len: 50
-    tracked_score_function: PerplexityScore@all
+    tracked_score_function: PerplexityScore{modality2}
     verbose: false
     use_relative_coefficients: true
 - RegularizersModifierCube:
     num_iter: 20
     reg_search: add
     regularizer_parameters:
-        name: decorrelation_phi_{specific_modality2}
+        name: decorrelation_phi_{modality3}
     selection:
-        - PerplexityScore{specific_modality2} < 1.05 * MINIMUM(PerplexityScore{specific_modality2}) and BleiLaffertyScore -> max
-    strategy: PerplexityStrategy
+        - PerplexityScore{modality3} < 1.05 * MINIMUM(PerplexityScore{modality3}) and BleiLaffertyScore -> max
+    strategy: PerplexityStrategy #{modality3}
     # parameters of this strategy are intended for revision
     strategy_params:
         start_point: 0
         step: 0.01
         max_len: 50
-    tracked_score_function: PerplexityScore@all
+    tracked_score_function: PerplexityScore{modality3}
     verbose: false
     use_relative_coefficients: true
 - RegularizersModifierCube:
     num_iter: 20
     reg_search: add
     regularizer_parameters:
-        name: smooth_phi_{specific_modality}
+        name: decorrelation_phi_{modality4}
     selection:
-        - PerplexityScore{specific_modality} < 1.05 * MINIMUM(PerplexityScore{specific_modality}) and BleiLaffertyScore -> max
-    strategy: PerplexityStrategy
+        - PerplexityScore{modality4} < 1.05 * MINIMUM(PerplexityScore{modality4}) and BleiLaffertyScore -> max
+    strategy: PerplexityStrategy #{modality4}
+    # parameters of this strategy are intended for revision
     strategy_params:
-        start_point: 0.25
-        step: 0.25
-        max_len: 6
-    tracked_score_function: PerplexityScore{specific_modality}
+        start_point: 0
+        step: 0.01
+        max_len: 50
+    tracked_score_function: PerplexityScore{modality4}
     verbose: false
-    use_relative_coefficients: false
-- RegularizersModifierCube:
-    num_iter: 20
-    reg_search: add
-    regularizer_parameters:
-        name: smooth_phi_{specific_modality2}
-    selection:
-        - PerplexityScore{specific_modality2} < 1.05 * MINIMUM(PerplexityScore{specific_modality2}) and BleiLaffertyScore -> max
-    strategy: PerplexityStrategy
-    strategy_params:
-        start_point: 0.25
-        step: 0.25
-        max_len: 6
-    tracked_score_function: PerplexityScore{specific_modality2}
-    verbose: false
-    use_relative_coefficients: false
+    use_relative_coefficients: true

@@ -16,7 +16,7 @@ regularizers:
 - DecorrelatorPhiRegularizer:
     name: decorrelation_phi_{modality1}
     topic_names: specific_topics
-    #tau_grid: [10**5, 10**6, 10**7, 10**8, 10**9, 10**10]
+    tau: 1
     class_ids: ['{modality1}']
 - SmoothSparseThetaRegularizer:
     name: sparse_theta
@@ -25,12 +25,12 @@ regularizers:
 - SmoothSparsePhiRegularizer:
     name: smooth_phi_{modality1}
     topic_names: specific_topics
-    #tau_grid: [0.25, 0.5, 0.75, 1.0, 1.25, 1.5]
+    tau: 1
     class_ids: ['{modality1}']
 - DecorrelatorPhiRegularizer:
     name: decorrelation_phi_{modality2}
     topic_names: specific_topics
-    #tau_grid: [10**5, 10**6, 10**7, 10**8, 10**9, 10**10]
+    tau: 1
     class_ids: ['{modality2}']
 - SmoothSparseThetaRegularizer:
     name: sparse_theta
@@ -39,7 +39,6 @@ regularizers:
 - SmoothSparsePhiRegularizer:
     name: smooth_phi_{modality2}
     topic_names: specific_topics
-    #tau_grid: [0.25, 0.5, 0.75, 1.0, 1.25, 1.5]
     tau: 1
     class_ids: ['{modality2}']
 
@@ -52,14 +51,32 @@ stages:
 # repeat the following two cubes for every modality in the dataset
 - RegularizersModifierCube:
     num_iter: 8
-    selection:
-        - PerplexityScore{modality1} < 1.1 * MINIMUM(PerplexityScore{modality1}) and SparsityPhiScore{modality2} -> max
+    reg_search: mul
     regularizer_parameters:
-        - name: decorrelation_phi_{modality1}
-          tau_grid: [10e5, 10e6, 10e7, 10e8, 10e9, 10e10]
-        - name: decorrelation_phi_{modality2}
-          tau_grid: [10e5, 10e6, 10e7, 1e8, 10e9, 10e10]
-    tracked_score_function: PerplexityScore@all
+        name: decorrelation_phi_{modality1}
+    selection:
+        - PerplexityScore{modality1} < 1.1 * MINIMUM(PerplexityScore{modality1}) and SparsityPhiScore{modality1} -> max
+    strategy: PerplexityStrategy
+    strategy_params:
+        start_point: 100000
+        step: 10
+        max_len: 6
+    tracked_score_function: PerplexityScore{modality1}
+    verbose: false
+    use_relative_coefficients: false
+- RegularizersModifierCube:
+    num_iter: 8
+    reg_search: mul
+    regularizer_parameters:
+        name: decorrelation_phi_{modality2}
+    selection:
+        - PerplexityScore{modality2} < 1.1 * MINIMUM(PerplexityScore{modality2}) and SparsityPhiScore{modality2} -> max
+    strategy: PerplexityStrategy
+    strategy_params:
+        start_point: 100000
+        step: 10
+        max_len: 6
+    tracked_score_function: PerplexityScore{modality2}
     verbose: false
     use_relative_coefficients: false
 - RegularizersModifierCube:
@@ -68,7 +85,7 @@ stages:
     regularizer_parameters:
         name: sparse_theta
     selection:
-        - PerplexityScore@all < 1.1 * MINIMUM(PerplexityScore@all) and SparsityPhiScore{modality1} -> max 
+        - PerplexityScore@all < 1.1 * MINIMUM(PerplexityScore@all) and SparsityPhiScore{modality1} -> max
     strategy: PerplexityStrategy
     strategy_params:
         start_point: -0.5
@@ -81,13 +98,29 @@ stages:
     num_iter: 8
     reg_search: add
     regularizer_parameters:
-        - name: smooth_phi_{modality1}
-          tau_grid: [0.25, 0.5, 0.75, 1.0, 1.25, 1.5]
-        - name: smooth_phi_{modality2}
-          tau_grid: [0.25, 0.5, 0.75, 1.0, 1.25, 1.5]
+        name: smooth_phi_{modality1}
     selection:
-        - PerplexityScore{modality1} < 1.1 * MINIMUM(PerplexityScore{modality1}) and SparsityPhiScore{modality2} -> max
+        - PerplexityScore{modality1} < 1.1 * MINIMUM(PerplexityScore{modality1}) and SparsityPhiScore{modality1} -> max
+    strategy: PerplexityStrategy
+    strategy_params:
+        start_point: 0.25
+        step: 0.25
+        max_len: 6
     tracked_score_function: PerplexityScore{modality1}
     verbose: false
     use_relative_coefficients: false
-#last cube is independent of modalities and can be used only once
+- RegularizersModifierCube:
+    num_iter: 8
+    reg_search: add
+    regularizer_parameters:
+        name: smooth_phi_{modality2}
+    selection:
+        - PerplexityScore{modality2} < 1.1 * MINIMUM(PerplexityScore{modality2}) and SparsityPhiScore{modality2} -> max
+    strategy: PerplexityStrategy
+    strategy_params:
+        start_point: 0.25
+        step: 0.25
+        max_len: 6
+    tracked_score_function: PerplexityScore{modality2}
+    verbose: false
+    use_relative_coefficients: false

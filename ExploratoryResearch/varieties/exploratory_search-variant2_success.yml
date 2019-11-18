@@ -16,30 +16,30 @@ regularizers:
 - DecorrelatorPhiRegularizer:
     name: decorrelation_phi_{modality1}
     topic_names: specific_topics
-    tau: 1
+    tau: 0
     class_ids: ['{modality1}']
 - SmoothSparseThetaRegularizer:
     name: sparse_theta
     topic_names: specific_topics
-    tau: 1
+    tau: 0
 - SmoothSparsePhiRegularizer:
     name: smooth_phi_{modality1}
     topic_names: specific_topics
-    tau: 1
+    tau: 0
     class_ids: ['{modality1}']
 - DecorrelatorPhiRegularizer:
     name: decorrelation_phi_{modality2}
     topic_names: specific_topics
-    tau: 1
+    tau: 0
     class_ids: ['{modality2}']
 - SmoothSparseThetaRegularizer:
     name: sparse_theta
     topic_names: specific_topics
-    tau: 1
+    tau: 0
 - SmoothSparsePhiRegularizer:
     name: smooth_phi_{modality2}
     topic_names: specific_topics
-    tau: 1
+    tau: 0
     class_ids: ['{modality2}']
 
 model: 
@@ -55,13 +55,28 @@ stages:
     regularizer_parameters:
         name: decorrelation_phi_{modality1}
     selection:
-        - PerplexityScore{modality1} < 1.01 * MINIMUM(PerplexityScore{modality1}) and SparsityPhiScore{modality1} -> max
+        - SparsityPhiScore{modality1} > 0.8 * MAXIMUM(SparsityPhiScore{modality1}) and PerplexityScore{modality1} -> min
     strategy: PerplexityStrategy
     strategy_params:
         start_point: 100000
         step: 10
         max_len: 6
-    tracked_score_function: PerplexityScore@all
+    tracked_score_function: PerplexityScore{modality1}
+    verbose: false
+    use_relative_coefficients: false
+- RegularizersModifierCube:
+    num_iter: 8
+    reg_search: mul
+    regularizer_parameters:
+        name: decorrelation_phi_{modality2}
+    selection:
+        - SparsityPhiScore{modality2} > 0.8 * MAXIMUM(SparsityPhiScore{modality2}) and PerplexityScore{modality2} -> min
+    strategy: PerplexityStrategy
+    strategy_params:
+        start_point: 100000
+        step: 10
+        max_len: 6
+    tracked_score_function: PerplexityScore{modality2}
     verbose: false
     use_relative_coefficients: false
 - RegularizersModifierCube:
@@ -70,7 +85,7 @@ stages:
     regularizer_parameters:
         name: sparse_theta
     selection:
-        - PerplexityScore@all < 1.01 * MINIMUM(PerplexityScore@all) and SparsityPhiScore{modality1} -> max
+        - SparsityPhiScore{modality1} > 0.8 * MAXIMUM(SparsityPhiScore{modality1}) and PerplexityScore@all -> min
     strategy: PerplexityStrategy
     strategy_params:
         start_point: -0.5
@@ -85,7 +100,7 @@ stages:
     regularizer_parameters:
         name: smooth_phi_{modality1}
     selection:
-        - PerplexityScore{modality1} < 1.01 * MINIMUM(PerplexityScore{modality1}) and SparsityPhiScore{modality1} -> max
+        - SparsityPhiScore{modality1} > 0.8 * MAXIMUM(SparsityPhiScore{modality1}) and PerplexityScore{modality1} -> min
     strategy: PerplexityStrategy
     strategy_params:
         start_point: 0.25
@@ -94,45 +109,13 @@ stages:
     tracked_score_function: PerplexityScore{modality1}
     verbose: false
     use_relative_coefficients: false
-#last cube is independent of modalities and can be used only once
-
-- RegularizersModifierCube:
-    num_iter: 8
-    reg_search: mul
-    regularizer_parameters:
-        name: decorrelation_phi_{modality2}
-    selection:
-        - PerplexityScore{modality2} < 1.01 * MINIMUM(PerplexityScore{modality2}) and SparsityPhiScore{modality2} -> max
-    strategy: PerplexityStrategy
-    strategy_params:
-        start_point: 100000
-        step: 10
-        max_len: 6
-    tracked_score_function: PerplexityScore@all
-    verbose: false
-    use_relative_coefficients: false
-- RegularizersModifierCube:
-    num_iter: 8
-    reg_search: add
-    regularizer_parameters:
-        name: sparse_theta
-    selection:
-        - PerplexityScore@all < 1.01 * MINIMUM(PerplexityScore@all) and SparsityPhiScore{modality2} -> max
-    strategy: PerplexityStrategy
-    strategy_params:
-        start_point: -0.5
-        step: -0.5
-        max_len: 6
-    tracked_score_function: PerplexityScore@all
-    verbose: false
-    use_relative_coefficients: false
 - RegularizersModifierCube:
     num_iter: 8
     reg_search: add
     regularizer_parameters:
         name: smooth_phi_{modality2}
     selection:
-        - PerplexityScore{modality2} < 1.01 * MINIMUM(PerplexityScore{modality2}) and SparsityPhiScore{modality2} -> max
+        - SparsityPhiScore{modality2} > 0.8 * MAXIMUM(SparsityPhiScore{modality2}) and PerplexityScore{modality2} -> min
     strategy: PerplexityStrategy
     strategy_params:
         start_point: 0.25
@@ -141,4 +124,3 @@ stages:
     tracked_score_function: PerplexityScore{modality2}
     verbose: false
     use_relative_coefficients: false
-#last cube is independent of modalities and can be used only once
